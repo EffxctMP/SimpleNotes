@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notitie & Herinnering App</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* CSS variabelen voor consistentie */
+        :root {
+            --squirqle-radius: 16px; /* Consistentie voor squirqle afrondingen */
+        }
+
+        /* Aangepaste CSS voor donker thema, frosted glass en knoppen */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a1a; /* Donkere achtergrond */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #ffffff; /* Witte tekstkleur */
+        }
+
+        .app-container {
+            background-color: rgba(255, 255, 255, 0.15); /* Licht transparant wit voor frosted glass */
+            backdrop-filter: blur(10px) saturate(180%); /* Frosted glass effect */
+            -webkit-backdrop-filter: blur(10px) saturate(180%); /* Safari ondersteuning */
+            border-radius: var(--squirqle-radius);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 30px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            width: 100%;
+            max-width: 600px; /* Maximale breedte voor de app */
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative; /* Voor settings icon */
+        }
+
+        /* Settings icon */
+        .settings-icon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+            width: 28px;
+            height: 28px;
+            color: white;
+            transition: transform 0.2s ease-in-out;
+            z-index: 10; /* Zorg dat het klikbaar is */
+        }
+        .settings-icon:hover {
+            transform: rotate(30deg);
+        }
+
+        /* Input velden en datetime-local styling */
+        input[type="text"],
+        input[type="datetime-local"] {
+            background-color: rgba(0, 0, 0, 0.2); /* Donker transparant */
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: var(--squirqle-radius);
+            padding: 10px 15px;
+            transition: all 0.2s ease-in-out;
+            width: 100%;
+        }
+
+        input[type="text"]:focus,
+        input[type="datetime-local"]:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.5);
+            background-color: rgba(0, 0, 0, 0.3);
+        }
+
+        /* Styling voor contenteditable div (generieke klasse) */
+        .content-editable-area {
+            background-color: rgba(0, 0, 0, 0.2);
+            color: white;
+            border-radius: 0 0 var(--squirqle-radius) var(--squirqle-radius); /* Alleen onderkant rond */
+            padding: 10px 15px;
+            min-height: 120px; /* Voldoende hoogte voor tekst */
+            overflow-y: auto; /* Scroll indien nodig */
+            transition: all 0.2s ease-in-out;
+            width: 100%;
+            flex-grow: 1; /* Zorgt dat het de beschikbare ruimte vult in flex container */
+            cursor: text; /* Toon cursor als tekstveld */
+        }
+
+        .content-editable-area:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.5); /* Focus state border, ook al zit deze nu op de container */
+            background-color: rgba(0, 0, 0, 0.3);
+        }
+
+        /* Placeholder voor contenteditable div */
+        [contenteditable="true"]:empty:before {
+            content: attr(placeholder);
+            color: rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+            display: block; /* Zorgt dat de placeholder zichtbaar is */
+        }
+
+        /* Witte ronde knoppen (basisstijl voor veel knoppen) */
+        .white-round-button {
+            background-color: white;
+            color: #1a1a1a; /* Donkere tekst op witte knop */
+            padding: 12px 25px;
+            border-radius: 9999px; /* Volledig rond */
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            flex-grow: 1; /* Zorgt dat knoppen de ruimte vullen */
+        }
+
+        .white-round-button:hover {
+            background-color: #e0e0e0; /* Iets donkerder wit */
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Actie specifieke knoppen voor hoofdscherm formulier en modal */
+        .white-round-button.add-button {
+            background-color: #333333; /* Donkergrijs */
+            color: white;
+        }
+        .white-round-button.add-button:hover {
+            background-color: #000000; /* Zwart */
+        }
+
+        .white-round-button.delete-button {
+            background-color: #f44336; /* Rood */
+            color: white;
+        }
+        .white-round-button.delete-button:hover {
+            background-color: #da190b;
+            transform: translateY(-1px);
+        }
+
+        /* Tabblad knoppen */
+        .tab-button {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 10px 20px;
+            border-radius: var(--squirqle-radius);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease-in-out;
+            flex-grow: 1;
+        }
+
+        .tab-button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .tab-button.active {
+            background-color: white;
+            color: #1a1a1a;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Notitie lijst items */
+        .note-item {
+            background-color: rgba(255, 255, 255, 0.05); /* Zeer licht transparant wit */
+            border-radius: var(--squirqle-radius);
+            padding: 15px;
+            margin-bottom: 10px;
+            transition: background-color 0.2s ease-in-out;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 8px; /* Ruimte tussen inhoud en knoppen */
+        }
+
+        .note-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Herinneringsindicatoren - Aangepast naar zwart/wit tinten */
+        .note-item.reminder-upcoming {
+            border-left: 5px solid #aaaaaa; /* Lichtgrijs voor aankomende */
+        }
+        .note-item.reminder-past {
+            border-left: 5px solid #555555; /* Donkergrijs voor verlopen */
+        }
+
+        /* Container voor actieknoppen binnen notitie-items */
+        .note-item-actions {
+            display: flex;
+            gap: 8px; /* Ruimte tussen de knoppen */
+            justify-content: flex-end; /* Knoppen aan de rechterkant */
+            margin-top: 10px; /* Ruimte boven de knoppen */
+        }
+
+        /* Individuele actieknoppen binnen notitie-items - Gebruiken nu .white-round-button */
+        .note-item-actions .white-round-button {
+            padding: 8px 12px; /* Kleinere padding voor buttons in lijst */
+            font-size: 0.85rem;
+            min-width: 80px; /* Minimale breedte voor betere klikbaarheid */
+            flex-grow: 0; /* Zorgt dat ze niet de volle breedte innemen */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Minder diepe schaduw */
+        }
+        
+        /* Specifieke kleuren voor bewerk- en verwijderknoppen in notitie-items */
+        .note-item-actions .white-round-button.edit-button {
+            background-color: white;
+            color: #1a1a1a;
+        }
+        .note-item-actions .white-round-button.edit-button:hover {
+            background-color: #e0e0e0;
+            transform: translateY(-1px);
+        }
+
+        .note-item-actions .white-round-button.delete-button {
+            background-color: #f44336; /* Rood */
+            color: white;
+        }
+        .note-item-actions .white-round-button.delete-button:hover {
+            background-color: #da190b;
+            transform: translateY(-1px);
+        }
+
+        /* Toolbar en editor container */
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            border-radius: var(--squirqle-radius); /* Hele container heeft afgeronde hoeken */
+            overflow: hidden; /* Zorgt dat inhoud niet buiten de border-radius valt */
+            border: 1px solid rgba(255, 255, 255, 0.3); /* Consistent met input fields */
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.1); /* Lichter frosted glass */
+            border-radius: var(--squirqle-radius) var(--squirqle-radius) 0 0; /* Alleen bovenkant rond */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* Divider */
+        }
+
+        /* Pas .white-round-button stijl aan voor toolbar-elementen */
+        .toolbar .white-round-button {
+            padding: 8px 12px; /* Kleinere padding voor buttons in toolbar */
+            font-size: 0.85rem;
+            min-width: 40px;
+            flex-shrink: 0; /* Voorkom krimpen */
+            box-shadow: none; /* Geen extra schaduw op toolbar knoppen */
+            display: flex; /* Maak flex om inhoud te centreren */
+            align-items: center;
+            justify-content: center;
+            /* Standaard status: donkere achtergrond, witte tekst */
+            background-color: rgba(0, 0, 0, 0.2); 
+            color: white;
+        }
+        .toolbar .white-round-button:hover {
+            background-color: rgba(0, 0, 0, 0.4); /* Donkerder hover */
+            transform: translateY(-1px);
+        }
+
+        /* Actieve staat voor toolbar knoppen (bold, italic, underline) */
+        .toolbar .white-round-button.active-toolbar-button {
+            background-color: white; /* Wit wanneer actief */
+            color: #1a1a1a; /* Donkere tekst wanneer actief */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Lichte schaduw wanneer actief */
+        }
+        .toolbar .white-round-button.active-toolbar-button:hover {
+            background-color: #e0e0e0; /* Lichte hover op actief */
+        }
+        
+        /* Styling voor de container van input type color en tekst */
+        .color-picker-button-container {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 12px;
+            background-color: rgba(0, 0, 0, 0.2); /* Consistent met andere toolbar knoppen */
+            color: white; /* Witte tekst voor "Kleur" */
+            border-radius: 9999px; /* Volledig rond */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            flex-shrink: 0;
+            font-weight: bold; /* Maak "Kleur" vetgedrukt */
+            justify-content: center; /* Centreer tekst en swatch */
+            position: relative; /* Voor de absolute positionering van input[type="color"] */
+        }
+
+        .color-picker-button-container:hover {
+            background-color: rgba(0, 0, 0, 0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.15);
+        }
+
+        /* De visuele kleur swatch */
+        .color-picker-button-container .color-swatch {
+            width: 24px;
+            height: 24px;
+            border-radius: 9999px;
+            border: 1px solid rgba(0, 0, 0, 0.2); /* Kleine rand voor zichtbaarheid */
+            flex-shrink: 0;
+            background-color: white; /* Standaardkleur, wordt via JS bijgewerkt */
+        }
+
+        /* Styling voor input type color binnen de knop */
+        .color-picker-button-container input[type="color"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 100%; /* Maak de input het hele gebied van de container */
+            height: 100%;
+            padding: 0;
+            border: none;
+            cursor: pointer;
+            position: absolute; /* Overlap de container */
+            top: 0;
+            left: 0;
+            opacity: 0; /* Maak hem volledig transparant */
+            z-index: 2; /* Zorg dat hij bovenaan ligt om kliks op te vangen */
+        }
+        /* Verwijder de standaard styling van de color input swatches,
+           omdat we nu onze eigen .color-swatch gebruiken voor de visuele weergave. */
+        .color-picker-button-container input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        .color-picker-button-container input[type="color"]::-webkit-color-swatch { border: none; border-radius: 9999px; }
+        .color-picker-button-container input[type="color"]::-moz-color-swatch-wrapper { padding: 0; }
+        .color-picker-button-container input[type="color"]::-moz-color-swatch { border: none; border-radius: 9999px; }
+
+        /* Styling voor select in toolbar (consistent met andere toolbar knoppen) */
+        .toolbar select.white-round-button {
+            appearance: none; /* Verberg standaard dropdown pijl */
+            padding-right: 25px; /* Ruimte voor custom pijl */
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M287%2069.4L208.6%20148l78.4%2078.4c4.6%204.6%204.6%2012.2%200%2016.8-4.6%204.6-12.2%204.6-16.8%200L148%20164.8l-78.4%2078.4c-4.6%204.6-12.2%204.6-16.8%200-4.6-4.6-4.6-12.2%200-16.8L131.2%20148%2052.8%2069.4c-4.6-4.6-4.6-12.2%200-16.8s12.2-4.6%2016.8%200L148%20131.2l78.4-78.4c4.6-4.6%2012.2-4.6%2016.8%200s4.6%2012.2%200%2016.8z%22%2F%3E%3C%2Fsvg%3E'); /* Witte pijl */
+            background-repeat: no-repeat;
+            background-position: right 8px top 50%;
+            background-size: 12px;
+            background-color: rgba(0, 0, 0, 0.2);
+            color: white;
+        }
+        .toolbar select.white-round-button:hover {
+            background-color: rgba(0, 0, 0, 0.4);
+            transform: translateY(-1px);
+        }
+
+        /* Full-screen edit modal */
+        .fullscreen-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); /* Donkere overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+
+        .fullscreen-modal.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .fullscreen-modal-content {
+            background-color: rgba(255, 255, 255, 0.15); /* Frosted glass */
+            backdrop-filter: blur(15px) saturate(180%);
+            -webkit-backdrop-filter: blur(15px) saturate(180%);
+            border-radius: var(--squirqle-radius);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 30px;
+            box-shadow: 0 8px 40px 0 rgba(0, 0, 0, 0.5);
+            width: 90%;
+            max-width: 700px; /* Grotere breedte voor de modal */
+            max-height: 90vh; /* Max hoogte voor scrollen */
+            overflow-y: auto; /* Scrollen als inhoud te groot is */
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Reminder Notification Modal */
+        #reminder-notification-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); /* Donkere overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1100; /* Hoger dan fullscreen-modal */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+
+        #reminder-notification-modal.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #reminder-notification-modal .modal-content {
+            background-color: rgba(255, 255, 255, 0.15); /* Frosted glass */
+            backdrop-filter: blur(15px) saturate(180%);
+            -webkit-backdrop-filter: blur(15px) saturate(180%);
+            border-radius: var(--squirqle-radius);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 30px;
+            box-shadow: 0 8px 40px 0 rgba(0, 0, 0, 0.5);
+            width: 90%;
+            max-width: 400px; /* Kleinere breedte voor notificatie */
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            text-align: center;
+        }
+
+        #reminder-notification-modal .modal-content h3 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        #reminder-notification-modal .modal-content p {
+            font-size: 1rem;
+            color: #e0e0e0;
+            margin-bottom: 15px;
+        }
+
+        #reminder-notification-modal .modal-content button {
+            background-color: #333333; /* Donkergrijs */
+            color: white;
+            padding: 10px 20px;
+            border-radius: 9999px; /* Volledig rond */
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s ease-in-out;
+            width: 100%; /* Zorg dat de knop de breedte vult */
+        }
+
+        #reminder-notification-modal .modal-content button:hover {
+            background-color: #000000; /* Zwart */
+        }
+
+        /* Tag badges voor weergave in notitie-items */
+        .tag-badge {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 9999px; /* Ronde pillen */
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            display: inline-flex; /* Zorgt dat ze naast elkaar blijven */
+            align-items: center;
+            white-space: nowrap; /* Voorkom dat tags afbreken */
+        }
+
+        /* Filter tags dropdown container */
+        .filter-tags-container {
+            position: relative;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .filter-tags-dropdown-header {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--squirqle-radius);
+            padding: 10px 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            color: white;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .filter-tags-dropdown-header:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .filter-tags-dropdown-content {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.7); /* Donkerder frosted glass voor dropdown */
+            backdrop-filter: blur(10px) saturate(180%);
+            -webkit-backdrop-filter: blur(10px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--squirqle-radius);
+            margin-top: 5px;
+            overflow: hidden;
+            z-index: 100;
+            max-height: 0; /* Standaard verborgen */
+            opacity: 0;
+            visibility: hidden;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out, visibility 0.3s ease-out;
+        }
+
+        .filter-tags-dropdown-content.open {
+            max-height: 300px; /* Max hoogte voor scrollen */
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .filter-tags-dropdown-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background-color 0.1s ease-in-out;
+            color: white;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Subtiele scheiding */
+        }
+        .filter-tags-dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .filter-tags-dropdown-item:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .filter-tags-dropdown-item.active {
+            background-color: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .filter-tags-dropdown-item .delete-tag-button {
+            background-color: #f44336; /* Rood */
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            padding: 4px 8px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .filter-tags-dropdown-item .delete-tag-button:hover {
+            background-color: #da190b;
+        }
+
+        .filter-tags-dropdown-item.special-action {
+            background-color: rgba(51, 51, 51, 0.5); /* Donkergrijs voor acties */
+            color: white;
+            font-weight: bold;
+            justify-content: center;
+        }
+        .filter-tags-dropdown-item.special-action:hover {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        /* Settings modal */
+        #settings-modal {
+            z-index: 1200; /* Nog hoger dan andere modals */
+        }
+
+        #settings-modal .modal-content {
+            background-color: rgba(255, 255, 255, 0.15); /* Frosted glass */
+            backdrop-filter: blur(15px) saturate(180%);
+            -webkit-backdrop-filter: blur(15px) saturate(180%);
+            border-radius: var(--squirqle-radius);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 30px;
+            box-shadow: 0 8px 40px 0 rgba(0, 0, 0, 0.5);
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            color: white;
+        }
+
+        #settings-modal .modal-content h2 {
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        #settings-modal .modal-content .tag-management-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #settings-modal .modal-content .tag-management-section .tag-input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        #settings-modal .modal-content .tag-list-settings {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        #settings-modal .modal-content .tag-item-settings {
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 8px 12px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        #settings-modal .modal-content .tag-item-settings .delete-tag-btn-settings {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 9999px;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        #settings-modal .modal-content .tag-item-settings .delete-tag-btn-settings:hover {
+            background-color: #da190b;
+        }
+        
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 bg-gray-900">
+    <div class="app-container">
+        <h1 class="text-3xl font-bold mb-4 text-center">Notities & Herinneringen</h1>
+
+        <!-- Settings icon -->
+        <svg id="settings-icon" class="settings-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+        </svg>
+
+        <!-- Tabbladen voor navigatie -->
+        <div class="flex justify-center gap-4 mb-4">
+            <button id="tab-new-note" class="tab-button active">Nieuwe Notitie</button>
+            <button id="tab-all-notes" class="tab-button">Alle Notities</button>
+            <button id="tab-reminders" class="tab-button">Herinneringen</button>
+        </div>
+
+        <!-- Notitie / Herinnering invoer/bewerking formulier (zichtbaar/verborgen door JS) -->
+        <div class="note-form flex flex-col gap-4">
+            <input type="hidden" id="note-id">
+            <input type="text" id="note-title" placeholder="Titel" class="p-3 rounded-lg bg-gray-700 text-white">
+            
+            <!-- Toolbar en contenteditable container -->
+            <div class="editor-container">
+                <div class="toolbar">
+                    <button id="bold-btn" class="white-round-button"><b>B</b></button>
+                    <button id="italic-btn" class="white-round-button"><i>I</i></button>
+                    <button id="underline-btn" class="white-round-button"><u>U</u></button>
+                    <div class="color-picker-button-container">
+                        <span class="font-bold">Kleur</span>
+                        <span class="color-swatch" id="main-color-swatch"></span>
+                        <input type="color" id="color-picker" value="#FFFFFF">
+                    </div>
+                    <select id="font-size-select" class="white-round-button">
+                        <option value="1">Klein</option>
+                        <option value="3" selected>Normaal</option>
+                        <option value="5">Groot</option>
+                        <option value="7">Extra Groot</option>
+                    </select>
+                </div>
+                <div id="note-content" contenteditable="true" placeholder="Inhoud..." class="content-editable-area"></div>
+            </div>
+
+            <input type="text" id="note-tags" placeholder="Tags (gescheiden door komma's)" class="p-3 rounded-lg bg-gray-700 text-white">
+            
+            <div id="reminder-input-group" class="hidden">
+                <label for="reminder-datetime" class="text-gray-300 text-sm font-bold mt-2">Herinnering datum & tijd:</label>
+                <input type="datetime-local" id="reminder-datetime" class="p-3 rounded-lg bg-gray-700 text-white">
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-4 mt-4">
+                <button id="save-note-btn" class="white-round-button add-button">Notitie Opslaan</button>
+                <button id="cancel-edit-btn" class="white-round-button">Annuleren</button>
+                <button id="delete-note-btn" class="white-round-button delete-button hidden">Verwijderen</button>
+            </div>
+        </div>
+
+        <hr class="border-t border-gray-800 my-4">
+
+        <!-- Display voor "Nieuwe Notitie" / Dashboard (met 3 recentste notities) -->
+        <div id="new-note-dashboard-display" class="note-list flex flex-col gap-3">
+            <h2 class="text-2xl font-bold mb-4 text-center">Meest Recente Notities</h2>
+            <p class="text-center text-gray-400" id="no-recent-notes-message">Nog geen recente notities.</p>
+            <!-- Recente notities worden hier dynamisch geladen -->
+        </div>
+
+        <!-- Alle Notities lijst weergave -->
+        <div id="all-notes-view-container" class="hidden">
+            <div id="all-notes-filter-tags" class="filter-tags-container">
+                <!-- Dropdown header en content worden hier geladen -->
+            </div>
+            <div id="all-notes-display" class="note-list flex-col gap-3">
+                <p class="text-center text-gray-400" id="no-all-notes-message">Nog geen notities. Voeg er een toe!</p>
+            </div>
+        </div>
+
+        <!-- Herinnering lijst weergave -->
+        <div id="reminders-view-container" class="hidden">
+            <div id="reminders-filter-tags" class="filter-tags-container">
+                <!-- Dropdown header en content worden hier geladen -->
+            </div>
+            <div id="reminders-list-display" class="note-list flex-col gap-3">
+                <p class="text-center text-gray-400" id="no-reminders-message">Nog geen herinneringen. Voeg er een toe!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full-screen bewerkingsmodal -->
+    <div id="fullscreen-edit-modal" class="fullscreen-modal">
+        <div class="fullscreen-modal-content">
+            <h2 class="text-2xl font-bold mb-4 text-center">Notitie Bewerken</h2>
+            <input type="hidden" id="modal-note-id">
+            <input type="text" id="modal-note-title" placeholder="Titel" class="p-3 rounded-lg bg-gray-700 text-white">
+            
+            <!-- Toolbar en contenteditable container voor modal -->
+            <div class="editor-container">
+                <div class="toolbar">
+                    <button id="modal-bold-btn" class="white-round-button"><b>B</b></button>
+                    <button id="modal-italic-btn" class="white-round-button"><i>I</i></button>
+                    <button id="modal-underline-btn" class="white-round-button"><u>U</u></button>
+                    <div class="color-picker-button-container">
+                        <span class="font-bold">Kleur</span>
+                        <span class="color-swatch" id="modal-color-swatch"></span>
+                        <input type="color" id="modal-color-picker" value="#FFFFFF">
+                    </div>
+                    <select id="modal-font-size-select" class="white-round-button">
+                        <option value="1">Klein</option>
+                        <option value="3" selected>Normaal</option>
+                        <option value="5">Groot</option>
+                        <option value="7">Extra Groot</option>
+                    </select>
+                </div>
+                <div id="modal-note-content" contenteditable="true" placeholder="Inhoud..." class="content-editable-area"></div>
+            </div>
+
+            <input type="text" id="modal-note-tags" placeholder="Tags (gescheiden door komma's)" class="p-3 rounded-lg bg-gray-700 text-white">
+            
+            <div id="modal-reminder-input-group">
+                <label for="modal-reminder-datetime" class="text-gray-300 text-sm font-bold mt-2">Herinnering datum & tijd:</label>
+                <input type="datetime-local" id="modal-reminder-datetime" class="p-3 rounded-lg bg-gray-700 text-white">
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-4 mt-4">
+                <button id="modal-save-btn" class="white-round-button add-button">Opslaan</button>
+                <button id="modal-cancel-btn" class="white-round-button">Annuleren</button>
+                <button id="modal-delete-btn" class="white-round-button delete-button">Verwijderen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reminder Notification Modal -->
+    <div id="reminder-notification-modal" class="fullscreen-modal">
+        <div class="modal-content">
+            <h3 id="notification-title">Herinnering!</h3>
+            <p id="notification-content"></p>
+            <button id="notification-close-btn">Sluiten</button>
+        </div>
+    </div>
+
+    <!-- Tags Settings Modal -->
+    <div id="settings-modal" class="fullscreen-modal">
+        <div class="modal-content">
+            <h2 class="text-white">Tag Instellingen</h2>
+            <div class="tag-management-section">
+                <label for="new-tag-input" class="text-gray-300">Nieuwe Tag Toevoegen:</label>
+                <div class="tag-input-group">
+                    <input type="text" id="new-tag-input" placeholder="Nieuwe tag naam" class="p-3 rounded-lg bg-gray-700 text-white flex-grow">
+                    <button id="add-new-tag-btn" class="white-round-button add-button">Toevoegen</button>
+                </div>
+            </div>
+
+            <hr class="border-t border-gray-800 my-4">
+
+            <div class="tag-management-section">
+                <label class="text-gray-300">Bestaande Tags Beheren:</label>
+                <div id="all-tags-list" class="tag-list-settings">
+                    <!-- Tags worden hier dynamisch geladen met verwijderknoppen -->
+                </div>
+            </div>
+            
+            <button id="close-settings-modal-btn" class="white-round-button">Sluiten</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
