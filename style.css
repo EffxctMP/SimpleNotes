@@ -15,12 +15,16 @@ body {
     padding: 20px; /* Standaard padding voor desktop/grotere schermen */
     box-sizing: border-box;
     color: #ffffff; /* Witte tekstkleur */
+    /* Zorg ervoor dat de body content gecentreerd blijft en geen overflow heeft */
+    overflow-x: hidden; /* Verberg horizontale scrollbar als inhoud overflowt */
 }
 
 /* Media query voor kleinere schermen (telefoons) */
 @media (max-width: 640px) {
     body {
         padding: 10px; /* Minder padding op kleine schermen */
+        /* Zorg ervoor dat de app verticaal uitlijnt op kleine schermen indien nodig */
+        align-items: flex-start; /* Om ruimte te laten voor scrollen als de content langer is dan het scherm */
     }
 }
 
@@ -150,17 +154,26 @@ input[type="datetime-local"]:focus {
     transform: translateY(-1px);
 }
 
-/* Tabblad knoppen */
+/* Tabblad knoppen container */
+.tab-buttons-container { /* Nieuwe container voor tabbladen */
+    display: flex;
+    justify-content: center;
+    gap: 8px; /* Ruimte tussen knoppen */
+    margin-bottom: 20px;
+    flex-wrap: wrap; /* Belangrijk voor responsiviteit, zorgt dat knoppen naar volgende regel gaan */
+}
+
 .tab-button {
     background-color: rgba(255, 255, 255, 0.1);
     color: white;
-    padding: 10px 20px;
+    padding: 10px 15px; /* Iets minder padding op mobiel */
     border-radius: var(--squirqle-radius);
     border: 1px solid rgba(255, 255, 255, 0.2);
     cursor: pointer;
     font-weight: bold;
     transition: all 0.2s ease-in-out;
-    flex-grow: 1;
+    /* flex-grow: 1; verwijderd om te voorkomen dat ze te breed worden op mobiel en de container verlaten */
+    flex-shrink: 0; /* Voorkom dat ze kleiner worden dan hun inhoud */
 }
 
 .tab-button:hover {
@@ -246,7 +259,7 @@ input[type="datetime-local"]:focus {
 
 .toolbar {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: wrap; /* Zorgt ervoor dat items naar de volgende regel gaan op kleine schermen */
     gap: 8px;
     padding: 10px;
     background-color: rgba(255, 255, 255, 0.1); /* Lichter frosted glass */
@@ -652,3 +665,5 @@ input[type="datetime-local"]:focus {
         #settings-modal .modal-content .tag-item-settings .delete-tag-btn-settings:hover {
             background-color: #da190b;
         }
+        
+    </style>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notitie & Herinnering App</title>
+    <title>Simple Notes</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -21,10 +21,22 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
+            padding: 20px; /* Standaard padding voor desktop/grotere schermen */
             box-sizing: border-box;
             color: #ffffff; /* Witte tekstkleur */
+            /* Zorg ervoor dat de body content gecentreerd blijft en geen overflow heeft */
+            overflow-x: hidden; 
         }
+
+        /* Media query voor kleinere schermen (telefoons) */
+        @media (max-width: 640px) {
+            body {
+                padding: 10px; /* Minder padding op kleine schermen */
+                /* Zorg ervoor dat de app verticaal uitlijnt op kleine schermen indien nodig */
+                align-items: flex-start; /* Of 'center' afhankelijk van voorkeur als content kleiner is dan viewport */
+            }
+        }
+
 
         .app-container {
             background-color: rgba(255, 255, 255, 0.15); /* Licht transparant wit voor frosted glass */
@@ -32,15 +44,23 @@
             -webkit-backdrop-filter: blur(10px) saturate(180%); /* Safari ondersteuning */
             border-radius: var(--squirqle-radius);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 30px;
+            padding: 30px; /* Standaard padding voor de container */
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-            width: 100%;
-            max-width: 600px; /* Maximale breedte voor de app */
+            width: 100%; /* Neemt altijd de volledige breedte van de parent aan */
+            max-width: 600px; /* Maximale breedte voor de app op grotere schermen */
             display: flex;
             flex-direction: column;
             gap: 20px;
             position: relative; /* Voor settings icon */
         }
+
+        /* Media query voor kleinere schermen (telefoons) */
+        @media (max-width: 640px) {
+            .app-container {
+                padding: 15px; /* Minder padding in de container zelf op kleine schermen */
+            }
+        }
+
 
         /* Settings icon */
         .settings-icon {
@@ -144,16 +164,25 @@
         }
 
         /* Tabblad knoppen */
+        .tab-buttons-container { /* Nieuwe container voor tabbladen */
+            display: flex;
+            justify-content: center;
+            gap: 8px; /* Iets minder gap op mobiel */
+            margin-bottom: 20px;
+            flex-wrap: wrap; /* Belangrijk voor responsiviteit */
+        }
+
         .tab-button {
             background-color: rgba(255, 255, 255, 0.1);
             color: white;
-            padding: 10px 20px;
+            padding: 10px 15px; /* Iets minder padding op mobiel */
             border-radius: var(--squirqle-radius);
             border: 1px solid rgba(255, 255, 255, 0.2);
             cursor: pointer;
             font-weight: bold;
             transition: all 0.2s ease-in-out;
-            flex-grow: 1;
+            /* flex-grow: 1; verwijderd om te voorkomen dat ze te breed worden op mobiel */
+            flex-shrink: 0; /* Voorkom dat ze kleiner worden dan hun inhoud */
         }
 
         .tab-button:hover {
@@ -239,7 +268,7 @@
 
         .toolbar {
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: wrap; /* Zorgt ervoor dat items naar de volgende regel gaan op kleine schermen */
             gap: 8px;
             padding: 10px;
             background-color: rgba(255, 255, 255, 0.1); /* Lichter frosted glass */
@@ -658,7 +687,7 @@
         </svg>
 
         <!-- Tabbladen voor navigatie -->
-        <div class="flex justify-center gap-4 mb-4">
+        <div class="tab-buttons-container">
             <button id="tab-new-note" class="tab-button active">Nieuwe Notitie</button>
             <button id="tab-all-notes" class="tab-button">Alle Notities</button>
             <button id="tab-reminders" class="tab-button">Herinneringen</button>
