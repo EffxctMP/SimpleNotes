@@ -12,10 +12,18 @@ body {
     align-items: center;
     min-height: 100vh;
     margin: 0;
-    padding: 20px;
+    padding: 20px; /* Standaard padding voor desktop/grotere schermen */
     box-sizing: border-box;
     color: #ffffff; /* Witte tekstkleur */
 }
+
+/* Media query voor kleinere schermen (telefoons) */
+@media (max-width: 640px) {
+    body {
+        padding: 10px; /* Minder padding op kleine schermen */
+    }
+}
+
 
 .app-container {
     background-color: rgba(255, 255, 255, 0.15); /* Licht transparant wit voor frosted glass */
@@ -23,15 +31,23 @@ body {
     -webkit-backdrop-filter: blur(10px) saturate(180%); /* Safari ondersteuning */
     border-radius: var(--squirqle-radius);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 30px;
+    padding: 30px; /* Standaard padding voor de container */
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    width: 100%;
-    max-width: 600px; /* Maximale breedte voor de app */
+    width: 100%; /* Neemt altijd de volledige breedte van de parent aan */
+    max-width: 600px; /* Maximale breedte voor de app op grotere schermen */
     display: flex;
     flex-direction: column;
     gap: 20px;
     position: relative; /* Voor settings icon */
 }
+
+/* Media query voor kleinere schermen (telefoons) */
+@media (max-width: 640px) {
+    .app-container {
+        padding: 15px; /* Minder padding in de container zelf op kleine schermen */
+    }
+}
+
 
 /* Settings icon */
 .settings-icon {
@@ -636,5 +652,3 @@ input[type="datetime-local"]:focus {
         #settings-modal .modal-content .tag-item-settings .delete-tag-btn-settings:hover {
             background-color: #da190b;
         }
-        
-    </style>
